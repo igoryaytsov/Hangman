@@ -1,174 +1,193 @@
 import random
-import time
-import turtle
+import sys
+import tkinter as tk
+from colorama import Fore, Style, init
 
-# Настройки окна
-delay = 0.1
-score = 0
-high_score = 0
+max_mistake = 6
+WORDS = [
+    "питон",
+    "программирование",
+    "алгоритм",
+    "переменная",
+    "функция",
+    "цикл",
+    "массив",
+    "компьютер",
+    "клавиатура",
+    "монитор",
+    "интернет",
+    "программа",
+    "разработка",
+    "ошибка",
+    "код",
+]
+HANGMAN_PICS = [
+    """
+       +---+
+           |
+           |
+           |
+           |
+    =========""",
+    """
+       +---+
+       O   |
+           |
+           |
+           |
+    =========""",
+    """
+       +---+
+       O   |
+       |   |
+           |
+           |
+    =========""",
+    """
+       +---+
+       O   |
+      /|   |
+           |
+           |
+    =========""",
+    """
+       +---+
+       O   |
+      /|\\  |
+           |
+           |
+    =========""",
+    """
+       +---+
+       O   |
+      /|\\  |
+      /    |
+           |
+    =========""",
+    """
+       +---+
+       O   |
+      /|\\  |
+      / \\  |
+           |
+    =========""",
+]
 
-wn = turtle.Screen()
-wn.title("Игра Змейка на Python")
-wn.bgcolor("blue")
-wn.setup(width=1000, height=1000)
-wn.tracer(0)  # Отключение автоматического обновления экрана
+class Game:
+    def __init__ (self, word):
+        ## создание массива и слова
+        self.word = word.lower()
+        self.guessed = set()
+        self.mistakes = 0
+    def display_word (self):
+        ## Проверка на то есть ли буква
+        result=[]
+        for letter in self.word:
+            if letter in self.guessed:
+                result.append(letter.upper())
+            else:
+                result.append("_")
+        return " ".join(result)
+    def guess (self, letter):
+        ## вывод результата букв, добавление в массив буквы
+        letter = letter.lower()
+        if letter in self.guessed:
+            return "already"
+        self.guessed.add(letter)
+        if letter in self.word:
+            return "correct"
+        else:
+            self.mistakes += 1
+            return "wrong"
+    def is_won (self):
+        ## победил ли игрок, если слова нет в массиве то нет
+        for letter in self.word:
+            if letter not in self.guessed:
+                return False
+        return True
+    def is_lost(self):
+        ## проиграл ли игрок
+        return self.mistakes >= max_mistake
+    def wrong_letter(self):
+        ## цикл для проверки
+        result = []
+        for l in self.guessed:
+            if l not in self.word:
+                result.append(l)
+        return sorted(result)
 
-# Голова змейки
-head = turtle.Turtle()
-head.speed(0)
-head.shape("square")
-head.color("red")
-head.penup()
-head.goto(0, 0)
-head.direction = "stop"
+##    word = random.choice(WORDS)
+##    game = Game(word)
+##    while not game.is_won() and not game.is_lost():
+##        print (HANGMAN_PICS[game.mistakes])
+##        print("Слово: ", game.display_word())
+##        print("Ошибки: ", game.wrong_letter(), f"({game.mistakes}/{max_mistake})")
+##        while True:
+##            letter = input("Слово: ").strip().lower()
+##            if len(letter) == 1 and letter.isalpha():
+##                break
+##            print("Нужна ровно 1 буква!")
+##        result = game.guess(letter)
+##        if result == "correct":
+##            print("Буква добавлена")
+##        elif result == "wrong":
+##            print("Нет такой буквы")
+##        elif result == "already":
+##            print("Уже есть такая буква")
+##    print(HANGMAN_PICS[game.mistakes])
+##    if game.is_won():
+##        print("Слово угадано! Слово: ", word)
+##        print("Количество ошибок: ", game.mistakes)
+##        print("Неправильные буквы: ", game.wrong_letter())
+##    elif game.is_lost():
+##        print("Вы проиграли. Слово было: ", word)
+##        print("Количество ошибок: ", game.mistakes)
+##        print("Неправильные буквы: ", game.wrong_letter())
+##        print("Ваш результат: ", game.display_word())
 
-# Еда для змейки
-food = turtle.Turtle()
-food.speed(0)
-food.shape("circle")
-food.color("green")
-food.penup()
-food.goto(0, 100)
+##play()
+def play_gui():
+    root = tk.Tk()
+    root.title("Висельница")
+    root.geometry("500x700")
+    word = random.choice(WORDS)
+    game = Game(word)
 
-segments = []
+    title_label = tk.Label(root, text = "Висельница", font = ("Arial", 24, "bold"))
+    title_label.pack(pady = 10)
 
-# Табло для счета
-pen = turtle.Turtle()
-pen.speed(0)
-pen.shape("square")
-pen.color("black")
-pen.penup()
-pen.hideturtle()
-pen.goto(-200, 460)
-pen.write("Счет: 0  Рекорд: 0", align="right", font=("serif", 24, "normal"))
+    pic_label = tk.Label(root, text = HANGMAN_PICS[0], font = ("Courier", 14))
+    pic_label.pack(pady = 10) 
 
+    word_label = tk.Label(root, text = game.display_word(), font = ("Arial", 24))
+    word_label.pack(pady = 10)
 
-# Функции управления
-def go_up():
-  if head.direction != "down":
-    head.direction = "up"
+    err_label = tk.Label(root, text = "Ошибки: (0/6)", font = ("Arial", 14))
+    err_label.pack(pady = 10)
 
+    guessed_label = tk.Label(root, text = f"Неправильные буквы: {game.wrong_letter()}", font = ("Arial", 14))
+    guessed_label.pack(pady = 5)
 
-def go_down():
-  if head.direction != "up":
-    head.direction = "down"
+    entry = tk.Entry(root, font = ("Arial", 18), width = 5, justify = "center")
+    entry.pack(pady = 10)
 
+    def on_guess():
+        letter = entry.get().strip().lower()
+        if len(letter) != 1 or not letter.isalpha():
+            return
+        game.guess(letter)
+        word_label.config(text = game.display_word())
+        pic_label.config(text = HANGMAN_PICS[game.mistakes])
+        err_label.config(text = f"Ошибки: ({game.mistakes}/{max_mistake})")
+        all_guessed = " ".join(sorted(game.guessed))
+      #  guessed_label.config(text = f"Введено: "{all_guessed()})
+        entry.delete(0, tk.END)
+        if game.is_won():
+            word_label.config(text = f"Слово угадано! Слово: {game.word}")
+        elif game.is_lost:
+            word_label.config(text = f"Вы проиграли. Слово было: {game.word}")
 
-def go_left():
-  if head.direction != "right":
-    head.direction = "left"
-
-
-def go_right():
-  if head.direction != "left":
-    head.direction = "right"
-
-
-def move():
-  if head.direction == "up":
-    y = head.ycor()
-    head.sety(y + 20)
-  if head.direction == "down":
-    y = head.ycor()
-    head.sety(y - 20)
-  if head.direction == "left":
-    x = head.xcor()
-    head.setx(x - 20)
-  if head.direction == "right":
-    x = head.xcor()
-    head.setx(x + 20)
-
-
-# Привязка клавиш (управление стрелками)
-wn.listen()
-wn.onkeypress(go_up, "Up")
-wn.onkeypress(go_down, "Down")
-wn.onkeypress(go_left, "Left")
-wn.onkeypress(go_right, "Right")
-
-# Главный игровой цикл
-while True:
-  wn.update()
-
-  # Столкновение со стенами
-  if (
-      head.xcor() > 490
-      or head.xcor() < -490
-      or head.ycor() > 490
-      or head.ycor() < -490
-  ):
-    time.sleep(1)
-    head.goto(0, 0)
-    head.direction = "stop"
-
-    # Удаление сегментов хвоста
-    for segment in segments:
-      segment.goto(1000, 1000)
-    segments.clear()
-
-    # Сброс счета
-    score = 0
-    pen.clear()
-    pen.write(
-        f"Счет: {score}  Рекорд: {high_score}",
-        align="right",
-        font=("serif", 24, "normal"),
-    )
-
-  # Поедание еды
-  if head.distance(food) < 20:
-    x = random.randint(-470, 470)
-    y = random.randint(-400, 470)
-    food.goto(x, y)
-
-    # Добавление нового сегмента тела
-    new_segment = turtle.Turtle()
-    new_segment.speed(0)
-    new_segment.shape("square")
-    new_segment.color("purple")
-    new_segment.penup()
-    segments.append(new_segment)
-
-    # Увеличение счета
-    score += 1
-    if score > high_score:
-      high_score = score
-
-    pen.clear()
-    pen.write(
-        f"Счет: {score}  Рекорд: {high_score}",
-        align="right",
-        font=("serif", 24, "normal"),
-    )
-
-  # Движение тела змейки
-  for i in range(len(segments) - 1, 0, -1):
-    x = segments[i - 1].xcor()
-    y = segments[i - 1].ycor()
-    segments[i].goto(x, y)
-
-  if len(segments) > 0:
-    x = head.xcor()
-    y = head.ycor()
-    segments[0].goto(x, y)
-
-  move()
-
-  # Столкновение с собственным хвостом
-  for segment in segments:
-    if segment.distance(head) < 20:
-      time.sleep(1)
-      head.goto(0, 0)
-      head.direction = "stop"
-      for s in segments:
-        s.goto(1000, 1000)
-      segments.clear()
-      score = 0
-      pen.clear()
-      pen.write(
-          f"Счет: {score}  Рекорд: {high_score}",
-          align="right",
-          font=("serif", 24, "normal"),
-      )
-
-  time.sleep(delay)
+    btn = tk.Button(root, text = "Угадать", font = ("Arial", 14), width = 10, command = on_guess)
+    btn.pack(pady = 10)
+    root.mainloop()
+play_gui()
