@@ -1,9 +1,7 @@
 import random
-import sys
 import tkinter as tk
-from colorama import Fore, Style, init
 
-max_mistake = 6
+MAX_MISTAKES = 6
 WORDS = [
     "питон",
     "программирование",
@@ -22,49 +20,49 @@ WORDS = [
     "код",
 ]
 HANGMAN_PICS = [
-    """
+    r"""
        +---+
            |
            |
            |
            |
     =========""",
-    """
+    r"""
        +---+
        O   |
            |
            |
            |
     =========""",
-    """
+    r"""
        +---+
        O   |
        |   |
            |
            |
     =========""",
-    """
+    r"""
        +---+
        O   |
       /|   |
            |
            |
     =========""",
-    """
+    r"""
        +---+
        O   |
       /|\\  |
            |
            |
     =========""",
-    """
+    r"""
        +---+
        O   |
       /|\\  |
       /    |
            |
     =========""",
-    """
+    r"""
        +---+
        O   |
       /|\\  |
@@ -107,8 +105,8 @@ class Game:
         return True
     def is_lost(self):
         ## проиграл ли игрок
-        return self.mistakes >= max_mistake
-    def wrong_letter(self):
+        return self.mistakes >= MAX_MISTAKES
+    def wrong_letters(self):
         ## цикл для проверки
         result = []
         for l in self.guessed:
@@ -116,40 +114,10 @@ class Game:
                 result.append(l)
         return sorted(result)
 
-##    word = random.choice(WORDS)
-##    game = Game(word)
-##    while not game.is_won() and not game.is_lost():
-##        print (HANGMAN_PICS[game.mistakes])
-##        print("Слово: ", game.display_word())
-##        print("Ошибки: ", game.wrong_letter(), f"({game.mistakes}/{max_mistake})")
-##        while True:
-##            letter = input("Слово: ").strip().lower()
-##            if len(letter) == 1 and letter.isalpha():
-##                break
-##            print("Нужна ровно 1 буква!")
-##        result = game.guess(letter)
-##        if result == "correct":
-##            print("Буква добавлена")
-##        elif result == "wrong":
-##            print("Нет такой буквы")
-##        elif result == "already":
-##            print("Уже есть такая буква")
-##    print(HANGMAN_PICS[game.mistakes])
-##    if game.is_won():
-##        print("Слово угадано! Слово: ", word)
-##        print("Количество ошибок: ", game.mistakes)
-##        print("Неправильные буквы: ", game.wrong_letter())
-##    elif game.is_lost():
-##        print("Вы проиграли. Слово было: ", word)
-##        print("Количество ошибок: ", game.mistakes)
-##        print("Неправильные буквы: ", game.wrong_letter())
-##        print("Ваш результат: ", game.display_word())
-
-##play()
 def play_gui():
     root = tk.Tk()
     root.title("Висельница")
-    root.geometry("500x700")
+    root.geometry("600x600")
     word = random.choice(WORDS)
     game = Game(word)
 
@@ -165,10 +133,45 @@ def play_gui():
     err_label = tk.Label(root, text = "Ошибки: (0/6)", font = ("Arial", 14))
     err_label.pack(pady = 10)
 
+    guessed_label = tk.Label(root, text = f"Неправильные буквы: {game.wrong_letters()}", font = ("Arial", 14))
+    guessed_label.pack(pady = 5)
+
     entry = tk.Entry(root, font = ("Arial", 18), width = 5, justify = "center")
     entry.pack(pady = 10)
 
-    btn = tk.Button(root, text = "Угадать", font = ("Arial", 14), width = 10)
+    def new_game():
+        nonlocal game, word
+        word = random.choice(WORDS)
+        game = Game(word)
+        word_label.config(text = game.display_word())
+        pic_label.config(text = HANGMAN_PICS[game.mistakes])
+        err_label.config(text = f"Ошибки: ({game.mistakes}/{MAX_MISTAKES})")
+        all_guessed = " ".join(sorted(game.guessed))
+        guessed_label.config(text = f"Неправильные буквы: {all_guessed}")
+        entry.delete(0, tk.END)
+        entry.focus()
+
+    def on_guess():
+        letter = entry.get().strip().lower()
+        if len(letter) != 1 or not letter.isalpha():
+            return
+        game.guess(letter)
+        word_label.config(text = game.display_word())
+        pic_label.config(text = HANGMAN_PICS[game.mistakes])
+        err_label.config(text = f"Ошибки: ({game.mistakes}/{MAX_MISTAKES})")
+        all_guessed = " ".join(sorted(game.guessed))
+        guessed_label.config(text = f"Неправильные буквы: {all_guessed}")
+        entry.delete(0, tk.END)
+        if game.is_won():
+            word_label.config(text = f"Слово угадано! Слово: {game.word}")
+        elif game.is_lost():
+            word_label.config(text = f"Вы проиграли. Слово было: {game.word}")
+
+    btn = tk.Button(root, text = "Угадать", font = ("Arial", 14), width = 10, command = on_guess)
     btn.pack(pady = 10)
+
+    btn_new = tk.Button(root, text = "Новая игра", font = ("Arial", 14), width = 10, command = new_game)
+    btn_new.pack(pady = 10)
+    
     root.mainloop()
 play_gui()
